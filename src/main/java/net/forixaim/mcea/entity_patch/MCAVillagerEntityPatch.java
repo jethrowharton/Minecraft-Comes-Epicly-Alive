@@ -110,6 +110,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 
     @Override
     protected void setWeaponMotions() {
+        super.setWeaponMotions();
         this.weaponAttackMotions.put(CapabilityItem.WeaponCategories.SWORD,
                 ImmutableMap.of(CapabilityItem.Styles.ONE_HAND,
                         MCACombatBehaviors.MCA_SWORD,
@@ -134,7 +135,6 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
         this.weaponAttackMotions.put(CapabilityItem.WeaponCategories.GREATSWORD,
                 ImmutableMap.of(CapabilityItem.Styles.TWO_HAND,
                 		MobCombatBehaviors.HUMANOID_GREATSWORD));
-        super.setWeaponMotions();
     }
 
     public void setStamina(float value) {
@@ -337,7 +337,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
     public AttackResult tryHurt(DamageSource damageSource, float amount) {
         if (isValidDamageSource(damageSource)) {
         	if(this.state.canUseSkill() && !this.isStunned()) {
-        	var willblock = !staminaDepleted &&( this.state.canBasicAttack() && Mth.randomBetween(this.getLevel().random, 0, 1) > (this.original.getProfession() == ProfessionsMCA.ARCHER ? 0.75 : 0.25) && this.getStamina()-0.25f*amount > 0 || this.getStamina() < 3);
+        	var willblock = !staminaDepleted &&( this.state.canBasicAttack() && (Mth.randomBetween(this.getLevel().random, 0, 1) > (this.original.getProfession() == ProfessionsMCA.ARCHER ? 0.75 : 0.25) || this.currentCompositeMotion == LivingMotions.BLOCK) && this.getStamina()-0.25f*amount > 0 || this.getStamina() < 3);
             if (willblock && (this.getCurrentLivingMotion() == (LivingMotions.BLOCK) || this.currentCompositeMotion == LivingMotions.BLOCK || this.currentCompositeMotion == LivingMotions.BLOCK_SHIELD || this.getStamina() >= 0) &&
                     !(damageSource.is(EpicFightDamageTypeTags.UNBLOCKALBE)) ) {
             	var parry = this.hitPrepare <= 15 && Mth.randomBetween(this.getLevel().random, 0, 1) > 0.5;
