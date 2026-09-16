@@ -110,7 +110,6 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 
     @Override
     protected void setWeaponMotions() {
-        super.setWeaponMotions();
         this.weaponAttackMotions.put(CapabilityItem.WeaponCategories.SWORD,
                 ImmutableMap.of(CapabilityItem.Styles.ONE_HAND,
                         MCACombatBehaviors.MCA_SWORD,
@@ -135,6 +134,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
         this.weaponAttackMotions.put(CapabilityItem.WeaponCategories.GREATSWORD,
                 ImmutableMap.of(CapabilityItem.Styles.TWO_HAND,
                 		MobCombatBehaviors.HUMANOID_GREATSWORD));
+        super.setWeaponMotions();
     }
 
     public void setStamina(float value) {

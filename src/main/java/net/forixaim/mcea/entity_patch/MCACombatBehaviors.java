@@ -14,7 +14,7 @@ public class MCACombatBehaviors
                             .nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.SWORD_AUTO1).withinEyeHeight().withinDistance(0.0D, 2.0D))
                             .nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.SWORD_AUTO2).withinEyeHeight().withinDistance(0.0D, 2.0D))
                             .nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.SWORD_AUTO3).withinEyeHeight().withinDistance(0.0D, 2.0D))
-            ).newBehaviorSeries(CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder().weight(0.0F).canBeInterrupted(false).looping(false)
+            ).newBehaviorSeries(CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder().weight(100.0F).canBeInterrupted(false).looping(false)
             		.nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.BIPED_BLOCK).withinEyeHeight().withinDistance(0.0D, 1.8D))
             		);
     public static final CombatBehaviors.Builder<HumanoidMobPatch<?>> HUMANOID_SPEAR_TWOHAND = CombatBehaviors.<HumanoidMobPatch<?>>builder()
@@ -27,7 +27,7 @@ public class MCACombatBehaviors
                                 h.getOriginal().jumpFromGround();
                                 h.playAnimationSynchronized(Animations.SPEAR_TWOHAND_AIR_SLASH, 0);
                             }).custom(h -> h.getTarget().getY() > h.getOriginal().getEyeY() + 1d)
-            )).newBehaviorSeries(CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder().weight(0.0F).canBeInterrupted(false).looping(false)
+            )).newBehaviorSeries(CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder().weight(100.0F).canBeInterrupted(false).looping(false)
             		.nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.BIPED_BLOCK).withinEyeHeight().withinDistance(0.0D, 1.8D))
             		);
 
@@ -40,7 +40,7 @@ public class MCACombatBehaviors
                             .nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.FIST_AUTO1).withinEyeHeight().withinDistance(0.0D, 1.8D))
                             .nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.FIST_AUTO2).withinEyeHeight().withinDistance(0.0D, 1.8D))
                             .nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.FIST_AUTO3).withinEyeHeight().withinDistance(0.0D, 1.8D))
-            ).newBehaviorSeries(CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder().weight(0.0F).canBeInterrupted(false).looping(false)
+            ).newBehaviorSeries(CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder().weight(100.0F).canBeInterrupted(false).looping(false)
             		.nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(Animations.BIPED_BLOCK).withinEyeHeight().withinDistance(0.0D, 1.8D))
             		);
 }
