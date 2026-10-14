@@ -5,6 +5,7 @@ import net.forixaim.mcea.entity_patch.MCAVillagerEntityPatch;
 import net.forixaim.mcea.renderer.PMCAVillagerRenderer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -51,6 +52,7 @@ public class MinecraftComesEpiclyAlive {
         event.add(entityType, EpicFightAttributes.OFFHAND_IMPACT);
         event.add(entityType, EpicFightAttributes.MAX_STAMINA);
         event.add(entityType, EpicFightAttributes.STAMINA_REGEN);
+        event.add(entityType, Attributes.ATTACK_SPEED);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
