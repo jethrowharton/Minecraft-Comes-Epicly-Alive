@@ -51,14 +51,14 @@ public class EFEquipmentTask extends Behavior<VillagerEntityMCA> {
         }
 
         // Check condition with cache to avoid repeated expensive tests
-        if (villager.tickCount - lastCheckTick >= CHECK_INTERVAL || !hasBestWeapon(villager, (cachedEquipmentSet != null ? cachedEquipmentSet.getMainHand() : null))&& MCATasksEF.hasPreferredTarget(villager)) {
+        if (villager.tickCount - lastCheckTick >= CHECK_INTERVAL || !villager.isGuard() && !hasBestWeapon(villager, (cachedEquipmentSet != null ? cachedEquipmentSet.getMainHand() : null))&& MCATasksEF.hasPreferredTarget(villager)) {
             lastCheckTick = villager.tickCount;
-            cachedConditionResult = condition.test(villager) || !hasBestWeapon(villager, (cachedEquipmentSet != null ? cachedEquipmentSet.getMainHand() : null))&& MCATasksEF.hasPreferredTarget(villager);
+            cachedConditionResult = condition.test(villager) || !villager.isGuard() && !hasBestWeapon(villager, (cachedEquipmentSet != null ? cachedEquipmentSet.getMainHand() : null))&& MCATasksEF.hasPreferredTarget(villager);
             cachedEquipmentSet = cachedConditionResult ? equipmentSet.apply(villager) : null;
         }
 
         EquipmentSet set = cachedEquipmentSet;
-        if (set != null && isNakedCombatSet(set, villager) && !hasBestWeapon(villager, set.getMainHand())&& MCATasksEF.hasPreferredTarget(villager)) {
+        if (set != null && isNakedCombatSet(set, villager) && !villager.isGuard() && !hasBestWeapon(villager, set.getMainHand())&& MCATasksEF.hasPreferredTarget(villager)) {
             equipBestWeapon(villager, set.getMainHand());
         	cachedConditionResult = true;
             //return ;
@@ -68,11 +68,11 @@ public class EFEquipmentTask extends Behavior<VillagerEntityMCA> {
         boolean present = villager.getBrain().getMemoryInternal(MemoryModuleTypeMCA.WEARS_ARMOR).isPresent();
         if (cachedConditionResult) {
             lastEquipTime = villager.tickCount;
-            return !present || set != null && !preserveMourningHands && (isMissingRequestedHandItem(villager, set) || !hasBestWeapon(villager, set.getMainHand())&& MCATasksEF.hasPreferredTarget(villager));
+            return !present || set != null && !preserveMourningHands && (isMissingRequestedHandItem(villager, set) || !villager.isGuard() && !hasBestWeapon(villager, set.getMainHand())&& MCATasksEF.hasPreferredTarget(villager));
         } else if (villager.tickCount - lastEquipTime > COOLDOWN) {
             return present;
         } else {
-            return !hasBestWeapon(villager, (set != null ? set.getMainHand() : null))&& MCATasksEF.hasPreferredTarget(villager);
+            return !villager.isGuard() && !hasBestWeapon(villager, (set != null ? set.getMainHand() : null))&& MCATasksEF.hasPreferredTarget(villager);
         }
     }
 
@@ -85,8 +85,9 @@ public class EFEquipmentTask extends Behavior<VillagerEntityMCA> {
         MCAVillagerEntityPatch patchEntity = EpicFightCapabilities.getEntityPatch(villager, MCAVillagerEntityPatch.class);
         ItemStack stack = patchEntity.getBestWeapon(fallback == Items.AIR ? null : fallback);
         villager.setItemSlot(villager.getDominantSlot(), stack);
-        villager.setItemInHand(villager.getDominantHand(), stack);
-        //patchEntity.setWeaponMotions();
+        
+        //villager.setItemInHand(villager.getDominantHand(), stack);
+        patchEntity.setWeaponMotions();
     }
 
     private boolean hasBestWeapon(VillagerEntityMCA villager, Item fallback) {
@@ -114,7 +115,7 @@ public class EFEquipmentTask extends Behavior<VillagerEntityMCA> {
             cachedEquipmentSet = set;
         }
 
-        if (set != null && isNakedCombatSet(set, villager) && !hasBestWeapon(villager, set.getMainHand())&& MCATasksEF.hasPreferredTarget(villager)) {
+        if (set != null && isNakedCombatSet(set, villager) && !villager.isGuard() && !hasBestWeapon(villager, set.getMainHand())&& MCATasksEF.hasPreferredTarget(villager)) {
             //return;
         	wear = true;
         }
@@ -136,9 +137,9 @@ public class EFEquipmentTask extends Behavior<VillagerEntityMCA> {
                 if(set != null && set.getGetOffHand() != null && set.getGetOffHand() != Items.AIR && onehanded)
                 villager.setItemSlot(villager.getOpposingSlot(), new ItemStack(set.getGetOffHand()));
             } else {
-                villager.setItemInHand(villager.getDominantHand(), ItemStack.EMPTY);
+                //villager.setItemInHand(villager.getDominantHand(), ItemStack.EMPTY);
                 villager.setItemSlot(villager.getDominantSlot(), ItemStack.EMPTY);
-                villager.setItemInHand(villager.getOpposingHand(), ItemStack.EMPTY);
+                //villager.setItemInHand(villager.getOpposingHand(), ItemStack.EMPTY);
                 villager.setItemSlot(villager.getOpposingSlot(), ItemStack.EMPTY);
             }
         }

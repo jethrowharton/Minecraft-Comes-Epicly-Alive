@@ -27,11 +27,13 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.RangedBowAttackGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.ClipContext;
@@ -103,6 +105,7 @@ import java.util.List;
 
 public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> {
     private float stamina;
+    ItemStack prevItem;
     protected int tickSinceLastAction;
     protected boolean staminaDepleted;
     protected int staminaRegenAwaitTicks;
@@ -132,6 +135,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 
     @Override
     protected void initAI() {
+    	//prevItem = original.getItemBySlot(original.getDominantSlot());
         super.initAI();
     }
 
@@ -195,6 +199,14 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 
     @Override
     public void preTickServer() {
+    	ItemStack stack = original.getItemBySlot(original.getDominantSlot()).isEmpty() ? getBestWeapon() : original.getItemBySlot(original.getDominantSlot());
+    	if(prevItem != stack && !original.isNoAi()) {
+        	prevItem = stack;
+        	//this.updateHeldItem(getPrimaryItemCapability(), getPrimaryItemCapability(), stack, stack, original.getDominantHand());
+        	original.goalSelector.removeAllGoals(goal -> goal instanceof AnimatedAttackGoal);
+        	setAIAsInfantry(stack.getItem() instanceof ProjectileWeaponItem);
+        	this.setWeaponMotions();
+    	}
         super.preTickServer();
         if (this.state.canBasicAttack()) {
             this.tickSinceLastAction++;
@@ -228,7 +240,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
         if (maxStamina < stamina) {
             this.setStamina(maxStamina);
         }
-        if(original.getItemBySlot(original.getDominantSlot()) != original.getItemInHand(original.getDominantHand())) {
+        if(original.getItemBySlot(original.getDominantSlot()) != original.getItemBySlot(original.getDominantSlot())) {
         	if(original.getItemInHand(original.getDominantHand()).isEmpty()) {
         		//original.setItemInHand(original.getDominantHand(), original.getItemBySlot(original.getDominantSlot()));
             
@@ -287,7 +299,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 	        stack = InventoryUtils.getBestRanged(original.getInventory()).orElse(stack);
 		}
     	if(!original.getItemBySlot(original.getDominantSlot()).isEmpty() && original.getItemBySlot(original.getDominantSlot()).getMaxDamage() > stack.getMaxDamage()) {
-    		return this.original.getItemInHand(original.getDominantHand());
+    		return original.getItemBySlot(original.getDominantSlot());
     	}
 		return stack;
     }
@@ -300,7 +312,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 	        stack = InventoryUtils.getBestRanged(original.getInventory()).orElse(fallback != null && fallback != Items.AIR ? new ItemStack(fallback) : stack);
 		}
     	if(!original.getItemBySlot(original.getDominantSlot()).isEmpty() && original.getItemBySlot(original.getDominantSlot()).getMaxDamage() > stack.getMaxDamage()) {
-    		return this.original.getItemInHand(original.getDominantHand());
+    		return original.getItemBySlot(original.getDominantSlot());
     	}
 		return stack;
     }
@@ -308,7 +320,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
     @Override
 
     public CombatBehaviors.Builder<HumanoidMobPatch<?>> getHoldingItemWeaponMotionBuilder() {
-    	ItemStack stack = getBestWeapon();
+    	ItemStack stack = original.getItemBySlot(original.getDominantSlot()).isEmpty() ? getBestWeapon() : original.getItemBySlot(original.getDominantSlot());
 		CapabilityItem itemCap = EpicFightCapabilities.getItemStackCapability(stack);
         //List<AnimationAccessor<? extends AttackAnimation>> combo = itemCap.getAutoAttackMotion(null);
 		
@@ -325,11 +337,13 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 	}
     
     public CombatBehaviors.Builder<HumanoidMobPatch<?>> getHoldingItemWeaponCapBuilder() {
-    	ItemStack stack = getBestWeapon();
-		if(!stack.isEmpty()) {
-		
+    	ItemStack stack = this.getAdvancedHoldingItemStack(original.getDominantHand());
+    	if(stack == null) {
+    		stack = getBestWeapon();
+    	}
+		//if(!stack.isEmpty()) {
 			CapabilityItem itemCap = EpicFightCapabilities.getItemStackCapability(stack);
-			if(itemCap instanceof WeaponCapability weaponCap && weaponCap.getCurrentSet(this) != null) {
+			if(itemCap instanceof WeaponCapability weaponCap ) {
 		        Moveset set = weaponCap.getCurrentSet(this);
 	        List<AnimationAccessor<? extends AttackAnimation>> combo;
 	        if(set == null) {
@@ -347,19 +361,17 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
 	        	//	combopart.get().setAccessor(accessor);
 	        		
 	        	//}
-	        	float atkspd = this.getAttackSpeed(original.getDominantHand());
-	            float playTime = combopart.get().getRealAnimation().get().getPlaySpeed(this, combopart.get().getRealAnimation().get()) * atkspd;
-	            float totalTime = playTime * (int)Math.ceil(combopart.get().getAccessor().get().getTransitionTime() / playTime);
 	            Optional<Float> reachOpt = combopart.get().getRealAnimation().get().getProperty(AttackAnimationProperty.REACH);
-	            combopart.get().getAccessor().get().setTotalTime(totalTime);
-	        	combobuilder.nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(combopart.get().getRealAnimation()).withinEyeHeight().withinDistance(0.0D, (reachOpt.isPresent() ? reachOpt.get() : weaponCap.getReach()+1D)));
+	            //combopart.get().setTotalTime(totalTime);
+	            //combopart.get().getAccessor().get().getAnimationClip().setClipTime(totalTime);
+	        	combobuilder.nextBehavior(CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder().animationBehavior(combopart.get().getRealAnimation()).withinEyeHeight().withinDistance(0.0D, (reachOpt.isPresent() ? reachOpt.get()+weaponCap.getReach() : weaponCap.getReach()+1.8D)));
 	        }
 	        
 	        combobehavior.newBehaviorSeries(combobuilder);
 	        return combobehavior;
 				
 			}
-		}
+		//}
 		return getHoldingItemWeaponMotionBuilder();
         
 	}
@@ -391,6 +403,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
     @Override
     public void setAIAsInfantry(boolean holdingRanedWeapon) {
 		//CombatBehaviors.Builder<HumanoidMobPatch<?>> builder = this.getHoldingItemWeaponMotionBuilder();
+    	prevItem = original.getItemBySlot(original.getDominantSlot()).isEmpty() ? getBestWeapon() : original.getItemBySlot(original.getDominantSlot());
 		CombatBehaviors.Builder<HumanoidMobPatch<?>> builder = this.getHoldingItemWeaponCapBuilder();
 		if (builder != null && !this.isAnticipatingAttack()) {
 			this.original.goalSelector.addGoal(0, new AnimatedAttackGoal<>(this, builder.build(this)));
@@ -431,6 +444,7 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
                 	this.currentLivingMotion = LivingMotions.IDLE;
             }
         }
+        
         //if (this.isAnticipatingAttack() && this.getHoldingItemCapability(InteractionHand.OFF_HAND).isWeaponCategory(CapabilityItem.WeaponCategories.SHIELD))
         //    currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
         //else if (this.isAnticipatingAttack())
@@ -476,12 +490,12 @@ public class MCAVillagerEntityPatch extends HumanoidMobPatch<VillagerEntityMCA> 
         	this.currentCompositeMotion = LivingMotions.BLOCK;
 
 
-    	ItemStack stack = getBestWeapon();
-		if((MCATasksEF.hasPreferredTarget(original) || getTarget() != null) && !stack.isEmpty()) {
+    	//ItemStack stack = getBestWeapon();
+		//if((MCATasksEF.hasPreferredTarget(original) || getTarget() != null) && !stack.isEmpty()) {
 			//this.original.setItemInHand(this.original.getDominantHand(), stack);
 			//this.original.setItemSlot(this.original.getDominantSlot(), stack);
 			//this.setWeaponMotions();
-		}
+		//}
         //this.modifyLivingMotionByCurrentItem(true);
     }
 

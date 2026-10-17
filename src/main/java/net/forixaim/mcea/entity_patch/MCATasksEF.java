@@ -6,6 +6,7 @@ import net.conczin.mca.entity.EquipmentSet;
 import net.conczin.mca.entity.VillagerEntityMCA;
 import net.conczin.mca.entity.ai.MemoryModuleTypeMCA;
 import net.conczin.mca.entity.ai.brain.VillagerTasksMCA;
+import net.conczin.mca.entity.ai.brain.sensor.GuardEnemiesSensor;
 import net.conczin.mca.registry.ProfessionsMCA;
 import net.conczin.mca.entity.ai.brain.tasks.*;
 import net.conczin.mca.server.world.data.villageComponents.VillageGuardsManager;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.*;
 import net.minecraft.world.entity.ai.behavior.declarative.BehaviorBuilder;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -112,6 +114,15 @@ public class MCATasksEF
     private static Activity getActivity(VillagerEntityMCA villager) {
         return villager.getBrain().getSchedule().getActivityAt((int) (villager.level().getDayTime() % 24000L));
     }
+    
+    private static Optional<NearestVisibleLivingEntities> getVisibleMobs(LivingEntity entity) {
+        return entity.getBrain().getMemoryInternal(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES);
+    }
+    private static Optional<LivingEntity> getNearestHostile(VillagerEntityMCA entity) {
+        return getVisibleMobs(entity).flatMap((list) -> list.find(target -> GuardEnemiesSensor.isGuardEnemy(target, entity))
+                .filter(target -> target.distanceToSqr(entity) < 8f)
+                .min((a, b) -> Double.compare(a.distanceToSqr(entity), b.distanceToSqr(entity))));
+    }
 
     public static Optional<? extends LivingEntity> getPreferredTarget(VillagerEntityMCA villager) {
     	
@@ -120,13 +131,12 @@ public class MCATasksEF
         } else {
             MCAVillagerEntityPatch patchEntity = EpicFightCapabilities.getEntityPatch(villager, MCAVillagerEntityPatch.class);
             Optional<LivingEntity> primary = villager.getBrain().getMemoryInternal(MemoryModuleTypeMCA.NEAREST_GUARD_ENEMY);
-            Optional<LivingEntity> secondary = villager.getBrain().getMemoryInternal(MemoryModuleType.NEAREST_HOSTILE);
             if (primary.isPresent() && (getActivity(villager) != Activity.REST || primary.get().distanceTo(villager) < 16.0)) {
                 return primary;
             } else {
-            	if(villager.getBrain().getMemoryInternal(MemoryModuleType.ATTACK_TARGET).isEmpty() && patchEntity.getTarget() != null) {
-            		//villager.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, patchEntity.getTarget());
-            		return Optional.ofNullable(patchEntity.getTarget());
+            	if(villager.getBrain().getMemoryInternal(MemoryModuleType.ATTACK_TARGET).isEmpty()) {
+            		villager.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, getNearestHostile(villager));
+            		return getNearestHostile(villager);
             	}
                 return villager.getBrain().getMemoryInternal(MemoryModuleType.ATTACK_TARGET);
             }
